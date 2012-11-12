@@ -2,12 +2,6 @@ package com.socrata.iteratee
 
 import scala.annotation.tailrec
 
-trait PossibleWord {
-  def string:String
-}
-
-case class Word(string:String) extends PossibleWord
-case class WordFragment(string:String) extends PossibleWord
 
 class WordEnumeratee[T](wordFragment:Option[String], iteratee:Iteratee[String,T]) extends Iteratee[String,T] {
   override def endOfInput() = {
@@ -28,7 +22,7 @@ class WordEnumeratee[T](wordFragment:Option[String], iteratee:Iteratee[String,T]
     }
 
     val lastStringIsFullWord = if (fullString != Nil && fullString(fullString.length-1) == ' ') true else false
-    val possibleFullWords = fullString.split(" ").toList
+    val possibleFullWords = fullString.split(" +").toList
     @tailrec
     def loop(words:List[String], newIter:Iteratee[String,T]):Either[WordEnumeratee[T],T] = {
       words match {
@@ -58,10 +52,6 @@ class WordCountIteratee(counts:Map[String,Int]) extends Iteratee[String,Map[Stri
 }
 
 
-
-
-
-import scala.io._
 object Main {
   def main(args:Array[String]) {
 
@@ -70,12 +60,13 @@ object Main {
 
     @tailrec
     def getInput[T](enum:WordEnumeratee[T]):WordEnumeratee[T] = {
+      print(">> ");
       val ln = Console.readLine()
       if (ln == "")
         enum
       else {
         enum.process(ln) match {
-          case Left(notDone) => getInput(notDone)
+          case Left(notDone) =>  getInput(notDone)
           case Right(done) => enum
         }
       }
